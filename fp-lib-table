@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "ADUMx165_USB_Isolator")(type "KiCad")(uri "${KIPRJMOD}/ADUMx165_USB_Isolator.pretty")(options "")(descr ""))
+)
