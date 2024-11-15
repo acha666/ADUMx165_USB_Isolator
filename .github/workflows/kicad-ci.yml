@@ -291,6 +291,7 @@ jobs:
       
       - name: Calculate tag
         id: calculate-tag
+        shell: bash
         run: |
           git config --global --add safe.directory $(pwd)
           tags=$(git tag -l "ci-build-*")

@@ -59,7 +59,7 @@
 
 已部署 GitHub Action CI/CD，每次提交都会自动执行 DRC 检查，并生成 Gerber 等制造文件。
 
-制造文件可在 [Release 页面](releases/) 下载。
+制造文件可在 [Release 页面](https://github.com/acha666/ADUMx165_USB_Isolator/releases) 下载。
 
 ### 电源设计
 
