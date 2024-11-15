@@ -234,19 +234,19 @@ jobs:
 
           # stack top images
           convert \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Cu.png -alpha set -channel A -evaluate multiply 1.0 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Mask.png -alpha set -channel A -evaluate multiply 0.8 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Paste.png -alpha set -channel A -evaluate multiply 0.8 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Fab.png -alpha set -channel A -evaluate multiply 0.8 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Mask.png -alpha set -channel A -evaluate multiply 0.4 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Paste.png -alpha set -channel A -evaluate multiply 0.9 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Silkscreen.png -alpha set -channel A -evaluate multiply 0.95 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Fab.png -alpha set -channel A -evaluate multiply 0.95 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts.png -alpha set -channel A -evaluate multiply 1.0 \) \
                   -background none -layers merge +repage ./outputs/png/${{ env.PROJECT_NAME }}-top.png
 
           # stack bottom images
           convert \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Cu.png -alpha set -channel A -evaluate multiply 1.0 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Mask.png -alpha set -channel A -evaluate multiply 0.8 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Paste.png -alpha set -channel A -evaluate multiply 0.8 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Fab.png -alpha set -channel A -evaluate multiply 0.8 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Mask.png -alpha set -channel A -evaluate multiply 0.4 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Paste.png -alpha set -channel A -evaluate multiply 0.9 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Silkscreen.png -alpha set -channel A -evaluate multiply 0.9 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Fab.png -alpha set -channel A -evaluate multiply 0.95 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts-mirrored.png -alpha set -channel A -evaluate multiply 1.0 \) \
                   -background none -layers merge ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png
 
@@ -311,6 +311,7 @@ jobs:
         run: |
           git config --global --add safe.directory $(pwd)
           tags=$(git tag -l "ci-build-*")
+          echo "Tags found: $tags"
           if [ -z "$tags" ]; then
             latest_tag="ci-build-0000"
           else
