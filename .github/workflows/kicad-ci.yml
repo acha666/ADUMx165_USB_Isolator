@@ -275,8 +275,8 @@ jobs:
             IMAGE_URLS+=("\"$IMAGE_URL\"")
             echo "Image uploaded: $IMAGE_URL"
           done
-          IMAGE_URL_JSON=$(printf '%s\n' "${IMAGE_URLS[@]}" | jq -R . | jq -s .)
-          echo "IMAGE_URLS=$IMAGE_URL_JSON" >> $GITHUB_OUTPUT
+          IMAGE_URLS_JSON=$(printf "[%s]" "$(IFS=,; echo "${IMAGE_URLS[*]}")")
+          echo "image_urls=$IMAGE_URLS_JSON" >> $GITHUB_OUTPUT
 
       - name: Upload Files (Gerber, Position, STEP, VRML, Netlist, Schematic)
         uses: actions/upload-artifact@master
