@@ -83,11 +83,11 @@ jobs:
             echo "::notice::$severity - $description: $items"
           done
 
-      # - name: Upload DRC Reports
-      #   uses: actions/upload-artifact@master
-      #   with:
-      #     name: drc-reports-${{ steps.short-sha.outputs.SHORT_SHA }}
-      #     path: ./outputs/drc
+      - name: Upload DRC Reports
+        uses: actions/upload-artifact@master
+        with:
+          name: drc-reports-${{ steps.short-sha.outputs.SHORT_SHA }}
+          path: ./outputs/drc
 
   export-files:
     needs: drc-check
@@ -264,18 +264,18 @@ jobs:
 
           for IMAGE in "${IMAGE_FILES[@]}"; do
             echo "Uploading $IMAGE to Imgur..."
-            RESPONSE=$(curl -v --location "$API_URL" \
+            RESPONSE=$(curl --location "$API_URL" \
                             --header 'Authorization: Client-ID ${{ secrets.IMGUR_CLIENT_ID }}' \
                             --form "image=@\"$IMAGE\"" \
                             --form 'type="image"' \
                             --form 'title="Image"' \
                             --form 'description="This is a upload from Github Workflow"')
-            echo $RESPONSE
+            # echo $RESPONSE
             IMAGE_URL=$(echo $RESPONSE | jq -r '.data.link')
             IMAGE_URLS+=("\"$IMAGE_URL\"")
             echo "Image uploaded: $IMAGE_URL"
           done
-          IMAGE_URL_JSON="[${IMAGE_URLS[*]}]"
+          IMAGE_URL_JSON=$(printf '%s\n' "${IMAGE_URLS[@]}" | jq -R . | jq -s .)
           echo "IMAGE_URLS=$IMAGE_URL_JSON" >> $GITHUB_OUTPUT
 
       - name: Upload Files (Gerber, Position, STEP, VRML, Netlist, Schematic)
@@ -309,6 +309,8 @@ jobs:
         id: calculate-tag
         shell: bash
         run: |
+          pwd
+          ls -la
           git config --global --add safe.directory $(pwd)
           tags=$(git tag -l "ci-build-*")
           echo "Tags found: $tags"
