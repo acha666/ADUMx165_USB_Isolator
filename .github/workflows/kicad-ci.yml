@@ -108,6 +108,8 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@master
+        with:
+          fetch-depth: 0
 
       - name: Set Short SHA
         id: short-sha
@@ -309,8 +311,6 @@ jobs:
         id: calculate-tag
         shell: bash
         run: |
-          pwd
-          ls -la
           git config --global --add safe.directory $(pwd)
           tags=$(git tag -l "ci-build-*")
           echo "Tags found: $tags"
