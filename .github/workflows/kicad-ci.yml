@@ -292,6 +292,7 @@ jobs:
       - name: Calculate tag
         id: calculate-tag
         run: |
+          git config --global --add safe.directory $(pwd)
           tags=$(git tag -l "ci-build-*")
           if [ -z "$tags" ]; then
             latest_tag="ci-build-0000"
@@ -302,6 +303,7 @@ jobs:
           next_tag=$(printf "ci-build-%04d" $((${latest_tag//ci-build-/} + 1)))
           echo "Next tag is $next_tag"
           echo "LAST_TAG=$latest_tag" >> $GITHUB_OUTPUT
+          echo "NEXT_TAG_NUMBER=$((${latest_tag//ci-build-/} + 1))" >> $GITHUB_OUTPUT
           echo "NEXT_TAG=$next_tag" >> $GITHUB_OUTPUT
 
       - name: Create tag
@@ -320,12 +322,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: CI Build ${{ steps.short-sha.outputs.SHORT_SHA }}
-          tag_name: ci-${{ steps.short-sha.outputs.LONG_SHA }}
+          name: CI Build \#${{ steps.calculate-tag.outputs.NEXT_TAG_NUMBER }}
+          tag_name: ${{ steps.calculate-tag.outputs.NEXT_TAG }}
           body: |
-            ## CI Build ${{ steps.short-sha.outputs.SHORT_SHA }}
+            This is an automated build from the CI pipeline. Use the files below at your own risk.
 
-            This is an automated build from the CI pipeline.
+            On commit: ${{ steps.short-sha.outputs.LONG_SHA }}
 
             ### Images
 
