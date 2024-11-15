@@ -80,9 +80,9 @@ jobs:
         run: |
           jq -c '.violations[]' "outputs/drc/${{ env.PROJECT_NAME }}-drc-report-all.json" | while read -r violation; do
             description=$(echo $violation | jq -r '.description')
-            # items=$(echo $violation | jq -r '.items[] | .description')
-            # echo "::notice ::$description - $items"
-            echo "::notice ::$description"
+            severity=$(echo $violation | jq -r '.severity')
+            items=$(echo $violation | jq -r '.items[].description' | paste -sd ", ")
+            echo "::notice::$severity - $description: $items"
           done
 
       - name: Upload DRC Reports
@@ -289,6 +289,21 @@ jobs:
           cp ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf ./outputs/Schematic-${{ steps.short-sha.outputs.SHORT_SHA }}.pdf
           cp ./outputs/bom/${{ env.PROJECT_NAME }}-bom.csv ./outputs/BOM-${{ steps.short-sha.outputs.SHORT_SHA }}.csv
       
+      - name: Calculate tag
+        id: calculate-tag
+        run: |
+          tags=$(git tag -l "ci-build-*")
+          if [ -z "$tags" ]; then
+            latest_tag="ci-build-0000"
+          else
+            latest_tag=$(echo "$tags" | sort -V | tail -n 1)
+          fi
+          echo "Latest tag is $latest_tag"
+          next_tag=$(printf "ci-build-%04d" $((${latest_tag//ci-build-/} + 1)))
+          echo "Next tag is $next_tag"
+          echo "LAST_TAG=$latest_tag" >> $GITHUB_OUTPUT
+          echo "NEXT_TAG=$next_tag" >> $GITHUB_OUTPUT
+
       - name: Create tag
         uses: actions/github-script@v7
         with:
@@ -296,7 +311,7 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/ci-${{ steps.short-sha.outputs.LONG_SHA }}',
+              ref: 'refs/tags/${{ steps.calculate-tag.outputs.NEXT_TAG }}',
               sha: context.sha
             })
 
