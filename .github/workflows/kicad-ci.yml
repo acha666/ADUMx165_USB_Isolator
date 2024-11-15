@@ -1,6 +1,6 @@
 name: KiCad PCB CI
 
-on: 
+on:
   push:
     branches:
       - main
@@ -25,7 +25,7 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@master
-      
+
       - name: Set Short SHA
         id: short-sha
         run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
@@ -36,13 +36,11 @@ jobs:
           cp .github/workflows/kicad-conf/gh-fp-lib-table ./fp-lib-table
           cp .github/workflows/kicad-conf/gh-sym-lib-table ./sym-lib-table
 
-      - name: Create Output Directories
-        run: mkdir -p outputs/drc
-
       - name: Run DRC and Capture Output
         id: drc
         shell: bash
         run: |
+          mkdir -p outputs/drc
           for severity in "all" "error" "warning" "exclusions"; do
             echo "::group::Running DRC with severity $severity"
             OUTPUT=$(kicad-cli pcb drc -o "outputs/drc/${{ env.PROJECT_NAME }}-drc-report-${severity}.json" \
@@ -85,11 +83,11 @@ jobs:
             echo "::notice::$severity - $description: $items"
           done
 
-      - name: Upload DRC Reports
-        uses: actions/upload-artifact@master
-        with:
-          name: drc-reports-${{ steps.short-sha.outputs.SHORT_SHA }}
-          path: ./outputs/drc
+      # - name: Upload DRC Reports
+      #   uses: actions/upload-artifact@master
+      #   with:
+      #     name: drc-reports-${{ steps.short-sha.outputs.SHORT_SHA }}
+      #     path: ./outputs/drc
 
   export-files:
     needs: drc-check
@@ -106,7 +104,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler inkscape imagemagick
+          sudo apt-get install -y protobuf-compiler inkscape imagemagick curl jq
 
       - name: Checkout Repository
         uses: actions/checkout@master
@@ -126,7 +124,7 @@ jobs:
         run: |
           rm ./fp-lib-table ./sym-lib-table
           cp .github/workflows/kicad-conf/gh-fp-lib-table ./fp-lib-table
-          cp .github/workflows/kicad-conf/gh-sym-lib-table ./sym-lib-table          
+          cp .github/workflows/kicad-conf/gh-sym-lib-table ./sym-lib-table
 
       - name: Export Files (Gerber, Drill, Position, STEP, VRML, Netlist)
         shell: bash
@@ -140,21 +138,21 @@ jobs:
                                        -D IS_CI=1 ./${{ env.PROJECT_NAME }}.kicad_pcb
 
           kicad-cli pcb export drill -o "outputs/gerber/" --format gerber --generate-map ./${{ env.PROJECT_NAME }}.kicad_pcb
-          
+
           kicad-cli pcb export pos -o "outputs/pnp/${{ env.PROJECT_NAME }}-top-pos.csv" \
                                    --side front \
                                    --format csv \
                                    --units mm \
                                    --exclude-dnp \
                                    ./${{ env.PROJECT_NAME }}.kicad_pcb
-          
+
           kicad-cli pcb export pos -o "outputs/pnp/${{ env.PROJECT_NAME }}-bottom-pos.csv" \
                                    --side back \
                                    --format csv \
                                    --units mm \
                                    --exclude-dnp \
                                    ./${{ env.PROJECT_NAME }}.kicad_pcb
-          
+
           kicad-cli pcb export step -o "outputs/step/${{ env.PROJECT_NAME }}.step" --no-dnp --subst-models --include-tracks --include-zones \
                                     -D BRANCH=${GITHUB_REF#refs/heads/} \
                                     -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
@@ -171,7 +169,7 @@ jobs:
                                     -D LONG_SHA=$GITHUB_SHA \
                                     -D IS_CI=1 \
                                     ./${{ env.PROJECT_NAME }}.kicad_pcb
-          
+
           for layer in "F.Silkscreen" "F.Paste" "F.Mask" "F.Fab" "F.Cu"; do
               kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-${layer}.svg" \
                                       --page-size-mode 2 \
@@ -213,7 +211,7 @@ jobs:
                                   -D LONG_SHA=$GITHUB_SHA \
                                   -D IS_CI=1 \
                                   ./${{ env.PROJECT_NAME }}.kicad_pcb   
-          
+
           kicad-cli sch export netlist -o "outputs/netlist/${{ env.PROJECT_NAME }}.kicadsexpr.net" --format kicadsexpr ./${{ env.PROJECT_NAME }}.kicad_sch
 
           kicad-cli sch export netlist -o "outputs/netlist/${{ env.PROJECT_NAME }}.kicadxml.net" --format kicadxml ./${{ env.PROJECT_NAME }}.kicad_sch
@@ -235,34 +233,50 @@ jobs:
           done
 
           # stack top images
-          convert ./outputs/png/${{ env.PROJECT_NAME }}-F.Cu.png -alpha set -channel A -evaluate multiply 1.0 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Mask.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Paste.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Fab.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts.png -alpha set -channel A -evaluate multiply 1.0 +channel \
-                  -background none -layers merge ./outputs/png/${{ env.PROJECT_NAME }}-top.png
-          
+          convert \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Cu.png -alpha set -channel A -evaluate multiply 1.0 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Mask.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Paste.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Fab.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts.png -alpha set -channel A -evaluate multiply 1.0 \) \
+                  -background none -layers merge +repage ./outputs/png/${{ env.PROJECT_NAME }}-top.png
+
           # stack bottom images
-          convert ./outputs/png/${{ env.PROJECT_NAME }}-B.Cu.png -alpha set -channel A -evaluate multiply 1 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Mask.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Paste.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Fab.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 +channel \
-                  ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts-mirrored.png -alpha set -channel A -evaluate multiply 1.0 +channel \
+          convert \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Cu.png -alpha set -channel A -evaluate multiply 1.0 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Mask.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Paste.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Fab.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts-mirrored.png -alpha set -channel A -evaluate multiply 1.0 \) \
                   -background none -layers merge ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png
 
           inkscape --export-filename ./outputs/png/${{ env.PROJECT_NAME }}-schematic.png --export-dpi 384 ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf
 
       - name: Upload Images to imgur
         id: upload-images
-        uses: devicons/public-upload-to-imgur@v2.2.2
-        with:
-          path: |
-            ./outputs/png/${{ env.PROJECT_NAME }}-top.png
-            ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png
-            ./outputs/png/${{ env.PROJECT_NAME }}-schematic.png
-          client_id: ${{secrets.IMGUR_CLIENT_ID}}
+        shell: bash
+        run: |
+          API_URL="https://api.imgur.com/3/image"
+          IMAGE_FILES=("./outputs/png/${{ env.PROJECT_NAME }}-top.png"\
+                       "./outputs/png/${{ env.PROJECT_NAME }}-bottom.png"\
+                       "./outputs/png/${{ env.PROJECT_NAME }}-schematic.png")
+          IMAGE_URLS=()
+
+          for IMAGE in "${IMAGE_FILES[@]}"; do
+            echo "Uploading $IMAGE to Imgur..."
+            RESPONSE=$(curl -v --location "$API_URL" \
+                            --header 'Authorization: Client-ID ${{ secrets.IMGUR_CLIENT_ID }}' \
+                            --form "image=@\"$IMAGE\"" \
+                            --form 'type="image"' \
+                            --form 'title="Image"' \
+                            --form 'description="This is a upload from Github Workflow"')
+            echo $RESPONSE
+            IMAGE_URL=$(echo $RESPONSE | jq -r '.data.link')
+            IMAGE_URLS+=("\"$IMAGE_URL\"")
+            echo "Image uploaded: $IMAGE_URL"
+          done
+          IMAGE_URL_JSON="[${IMAGE_URLS[*]}]"
+          echo "IMAGE_URLS=$IMAGE_URL_JSON" >> $GITHUB_OUTPUT
 
       - name: Upload Files (Gerber, Position, STEP, VRML, Netlist, Schematic)
         uses: actions/upload-artifact@master
@@ -281,14 +295,16 @@ jobs:
 
       - name: Zip and rename files
         run: |
-          zip -r ./outputs/Grber-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./outputs/gerber
-          zip -r ./outputs/PNP-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./outputs/pnp
-          zip -r ./outputs/STEP-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./outputs/step
-          zip -r ./outputs/VRML-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./outputs/vrml
-          zip -r ./outputs/Netlist-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./outputs/netlist
-          cp ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf ./outputs/Schematic-${{ steps.short-sha.outputs.SHORT_SHA }}.pdf
-          cp ./outputs/bom/${{ env.PROJECT_NAME }}-bom.csv ./outputs/BOM-${{ steps.short-sha.outputs.SHORT_SHA }}.csv
-      
+          cd ./outputs
+          zip -r ./Gerber-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./gerber
+          zip -r ./PNP-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./pnp
+          zip -r ./STEP-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./step
+          zip -r ./VRML-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./vrml
+          zip -r ./Netlist-${{ steps.short-sha.outputs.SHORT_SHA }}.zip ./netlist
+          cp ./schematic/${{ env.PROJECT_NAME }}-schematic.pdf ./Schematic-${{ steps.short-sha.outputs.SHORT_SHA }}.pdf
+          cp ./bom/${{ env.PROJECT_NAME }}-bom.csv ./BOM-${{ steps.short-sha.outputs.SHORT_SHA }}.csv
+          cd ..
+
       - name: Calculate tag
         id: calculate-tag
         shell: bash
@@ -323,7 +339,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: CI Build \#${{ steps.calculate-tag.outputs.NEXT_TAG_NUMBER }}
+          name: CI Build #${{ steps.calculate-tag.outputs.NEXT_TAG_NUMBER }}
           tag_name: ${{ steps.calculate-tag.outputs.NEXT_TAG }}
           body: |
             This is an automated build from the CI pipeline. Use the files below at your own risk.
@@ -332,16 +348,16 @@ jobs:
 
             ### Images
 
-            ![Top Layer](${{fromJSON(steps.upload-images.outputs.imgur_urls)[0]}})
+            ![Top Layer](${{fromJSON(steps.upload-images.outputs.IMAGE_URLS)[0]}})
 
-            ![Bottom Layer](${{fromJSON(steps.upload-images.outputs.imgur_urls)[1]}})
+            ![Bottom Layer](${{fromJSON(steps.upload-images.outputs.IMAGE_URLS)[1]}})
 
-            ![Schematic](${{fromJSON(steps.upload-images.outputs.imgur_urls)[2]}})
-            
+            ![Schematic](${{fromJSON(steps.upload-images.outputs.IMAGE_URLS)[2]}})
+
           draft: false
           prerelease: true
           files: |
-            ./outputs/Grber-${{ steps.short-sha.outputs.SHORT_SHA }}.zip
+            ./outputs/Gerber-${{ steps.short-sha.outputs.SHORT_SHA }}.zip
             ./outputs/PNP-${{ steps.short-sha.outputs.SHORT_SHA }}.zip
             ./outputs/STEP-${{ steps.short-sha.outputs.SHORT_SHA }}.zip
             ./outputs/VRML-${{ steps.short-sha.outputs.SHORT_SHA }}.zip
@@ -367,7 +383,7 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@master
-      
+
       - name: Set short SHA
         id: short-sha
         run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
@@ -379,10 +395,10 @@ jobs:
           path: files
 
       - name: Process Gerber for JLCPCB
-        run: | 
+        run: |
           mkdir -p ./jlc-gerber
           python .github/workflows/FuckJLC/modify.py -i $(pwd)/files/gerber -o $(pwd)/jlc-gerber
-      
+
       - name: Upload JLC Gerber Files
         uses: actions/upload-artifact@master
         with:
