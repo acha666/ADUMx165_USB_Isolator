@@ -120,9 +120,9 @@
         "zones_intersect": "error"
       },
       "rules": {
-        "max_error": 0.005,
-        "min_clearance": 0.0,
-        "min_connection": 0.0,
+        "max_error": 0.0025,
+        "min_clearance": 0.12,
+        "min_connection": 0.12,
         "min_copper_edge_clearance": 0.15,
         "min_hole_clearance": 0.15,
         "min_hole_to_hole": 0.2,
@@ -133,8 +133,8 @@
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.2,
-        "min_track_width": 0.0,
-        "min_via_annular_width": 0.1,
+        "min_track_width": 0.12,
+        "min_via_annular_width": 0.125,
         "min_via_diameter": 0.45,
         "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
@@ -193,25 +193,25 @@
           "corner_radius_percentage": 80,
           "corner_style": 1,
           "max_amplitude": 1.0,
-          "min_amplitude": 0.2,
+          "min_amplitude": 0.1,
           "single_sided": false,
-          "spacing": 1.0
+          "spacing": 0.5
         },
         "diff_pair_skew_defaults": {
           "corner_radius_percentage": 80,
           "corner_style": 1,
           "max_amplitude": 1.0,
-          "min_amplitude": 0.2,
+          "min_amplitude": 0.1,
           "single_sided": false,
-          "spacing": 0.6
+          "spacing": 0.2
         },
         "single_track_defaults": {
           "corner_radius_percentage": 80,
           "corner_style": 1,
           "max_amplitude": 1.0,
-          "min_amplitude": 0.2,
+          "min_amplitude": 0.1,
           "single_sided": false,
-          "spacing": 0.6
+          "spacing": 0.2
         }
       },
       "via_dimensions": [

@@ -44,7 +44,13 @@ jobs:
         shell: bash
         run: |
           for severity in "all" "error" "warning" "exclusions"; do
-            OUTPUT=$(kicad-cli pcb drc -o "outputs/drc/${{ env.PROJECT_NAME }}-drc-report-${severity}.json" --format json --schematic-parity --severity-${severity} -D BRANCH_HASH=${GITHUB_REF#refs/heads/}-${{ steps.short-sha.outputs.SHORT_SHA }} ./${{ env.PROJECT_NAME }}.kicad_pcb)
+            OUTPUT=$(kicad-cli pcb drc -o "outputs/drc/${{ env.PROJECT_NAME }}-drc-report-${severity}.json" \
+                                       --format json --schematic-parity --severity-${severity} \
+                                       -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                       -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                       -D LONG_SHA=$GITHUB_SHA \
+                                       -D IS_CI=1 \
+                                       ./${{ env.PROJECT_NAME }}.kicad_pcb)
             echo "$OUTPUT"
             SINGLE_LINE_OUTPUT=$(echo "$OUTPUT" | tr '\n' ',')
             echo "DRC_OUTPUT_${severity^^}=$SINGLE_LINE_OUTPUT" >> $GITHUB_OUTPUT
@@ -62,7 +68,7 @@ jobs:
           echo "Schematic Parity Issues: $schematic_issues"
           if [ "$violations" -ne 0 ] || [ "$unconnected_items" -ne 0 ] || [ "$schematic_issues" -ne 0 ]; then
             echo "PROCEED=false" >> $GITHUB_OUTPUT
-            echo "Errors found, stopping the workflow."
+            echo "Errors found, will stop the workflow."
           else
             echo "PROCEED=true" >> $GITHUB_OUTPUT
             echo "No errors found, proceeding with the workflow."
@@ -97,7 +103,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
+          sudo apt-get install -y protobuf-compiler inkscape
 
       - name: Checkout Repository
         uses: actions/checkout@master
@@ -117,27 +123,98 @@ jobs:
         run: |
           rm ./fp-lib-table ./sym-lib-table
           cp .github/workflows/kicad-conf/gh-fp-lib-table ./fp-lib-table
-          cp .github/workflows/kicad-conf/gh-sym-lib-table ./sym-lib-table
-
-      - name: Create Output Directories
-        shell: bash
-        run: |
-          mkdir -p outputs/{gerber,pnp,step,vrml,bom,netlist,schematic,svg,bom}
+          cp .github/workflows/kicad-conf/gh-sym-lib-table ./sym-lib-table          
 
       - name: Export Files (Gerber, Drill, Position, STEP, VRML, Netlist)
+        shell: bash
         run: |
-          kicad-cli pcb export gerbers -o "outputs/gerber/" --board-plot-params -D BRANCH_HASH=${GITHUB_REF#refs/heads/}-${{ steps.short-sha.outputs.SHORT_SHA }} ./${{ env.PROJECT_NAME }}.kicad_pcb
+          mkdir -p outputs/{gerber,pnp,step,vrml,bom,netlist,schematic,svg,bom,png}
+
+          kicad-cli pcb export gerbers -o "outputs/gerber/" --board-plot-params \
+                                       -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                       -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                       -D LONG_SHA=$GITHUB_SHA \
+                                       -D IS_CI=1 ./${{ env.PROJECT_NAME }}.kicad_pcb
+
           kicad-cli pcb export drill -o "outputs/gerber/" --format gerber --generate-map ./${{ env.PROJECT_NAME }}.kicad_pcb
-          kicad-cli pcb export pos -o "outputs/pnp/${{ env.PROJECT_NAME }}-top-pos.csv" --side front --format csv --units mm --exclude-dnp ./${{ env.PROJECT_NAME }}.kicad_pcb
-          kicad-cli pcb export pos -o "outputs/pnp/${{ env.PROJECT_NAME }}-bottom-pos.csv" --side back --format csv --units mm --exclude-dnp ./${{ env.PROJECT_NAME }}.kicad_pcb
-          kicad-cli pcb export step -o "outputs/step/${{ env.PROJECT_NAME }}.step" --no-dnp --subst-models --include-tracks --include-zones -D BRANCH_HASH=${GITHUB_REF#refs/heads/}-${{ steps.short-sha.outputs.SHORT_SHA }} ./${{ env.PROJECT_NAME }}.kicad_pcb
-          kicad-cli pcb export vrml -o "outputs/vrml/${{ env.PROJECT_NAME }}.wrl" --units mm --models-dir "${{ env.PROJECT_NAME }}.wrl.modules" --models-relative -D BRANCH_HASH=${GITHUB_REF#refs/heads/}-${{ steps.short-sha.outputs.SHORT_SHA }} ./${{ env.PROJECT_NAME }}.kicad_pcb
-          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-top.svg" --page-size-mode 2 --layers "F.Cu,F.Silkscreen,F.Paste,F.Mask,Edge.Cuts" ./${{ env.PROJECT_NAME }}.kicad_pcb
-          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-bottom.svg" --page-size-mode 2 --layers "B.Cu,B.Silkscreen,B.Paste,B.Mask,Edge.Cuts" --mirror ./${{ env.PROJECT_NAME }}.kicad_pcb
+          
+          kicad-cli pcb export pos -o "outputs/pnp/${{ env.PROJECT_NAME }}-top-pos.csv" \
+                                   --side front \
+                                   --format csv \
+                                   --units mm \
+                                   --exclude-dnp \
+                                   ./${{ env.PROJECT_NAME }}.kicad_pcb
+          
+          kicad-cli pcb export pos -o "outputs/pnp/${{ env.PROJECT_NAME }}-bottom-pos.csv" \
+                                   --side back \
+                                   --format csv \
+                                   --units mm \
+                                   --exclude-dnp \
+                                   ./${{ env.PROJECT_NAME }}.kicad_pcb
+          
+          kicad-cli pcb export step -o "outputs/step/${{ env.PROJECT_NAME }}.step" --no-dnp --subst-models --include-tracks --include-zones \
+                                    -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                    -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                    -D LONG_SHA=$GITHUB_SHA \
+                                    -D IS_CI=1 \
+                                    ./${{ env.PROJECT_NAME }}.kicad_pcb
+
+          kicad-cli pcb export vrml -o "outputs/vrml/${{ env.PROJECT_NAME }}.wrl" \
+                                    --units mm \
+                                    --models-dir "${{ env.PROJECT_NAME }}.wrl.modules" \
+                                    --models-relative \
+                                    -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                    -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                    -D LONG_SHA=$GITHUB_SHA \
+                                    -D IS_CI=1 \
+                                    ./${{ env.PROJECT_NAME }}.kicad_pcb
+          
+          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-top.svg" \
+                                   --page-size-mode 2 \
+                                   --layers "F.Silkscreen,F.Paste,F.Mask,Edge.Cuts,F.Fab,F.Cu" \
+                                   -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                    -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                    -D LONG_SHA=$GITHUB_SHA \
+                                    -D IS_CI=1 \
+                                   ./${{ env.PROJECT_NAME }}.kicad_pcb
+          
+          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-bottom.svg" \
+                                   --page-size-mode 2 \
+                                   --layers "B.Silkscreen,B.Paste,B.Mask,Edge.Cuts,B.Fab,B.Cu" \
+                                   -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                   -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                   -D LONG_SHA=$GITHUB_SHA \
+                                   -D IS_CI=1 \
+                                   ./${{ env.PROJECT_NAME }}.kicad_pcb
+          
           kicad-cli sch export netlist -o "outputs/netlist/${{ env.PROJECT_NAME }}.kicadsexpr.net" --format kicadsexpr ./${{ env.PROJECT_NAME }}.kicad_sch
+
           kicad-cli sch export netlist -o "outputs/netlist/${{ env.PROJECT_NAME }}.kicadxml.net" --format kicadxml ./${{ env.PROJECT_NAME }}.kicad_sch
+
           kicad-cli sch export pdf -o "outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf" -n ./${{ env.PROJECT_NAME }}.kicad_sch
-          kicad-cli sch export bom -o "outputs/bom/${{ env.PROJECT_NAME }}-bom.csv" --format-preset CSV --fields "Reference,Value,Footprint,${QUANTITY},Notes,${DNP}" --labels "Refs,Value,Footprint,Qty,Note,DNP" --group-by "Reference,Value,Footprint,${DNP}" ./${{ env.PROJECT_NAME }}.kicad_sch
+
+          kicad-cli sch export bom -o "outputs/bom/${{ env.PROJECT_NAME }}-bom.csv" \
+                                   --format-preset CSV \
+                                   --fields "Reference,Value,Footprint,${QUANTITY},Notes,${DNP}" \
+                                   --labels "Refs,Value,Footprint,Qty,Note,DNP" \
+                                   --group-by "Reference,Value,Footprint,${DNP}" \
+                                   ./${{ env.PROJECT_NAME }}.kicad_sch
+
+      - name: Convert SVG to PNG
+        run: |
+          inkscape -z -e ./outputs/png/${{ env.PROJECT_NAME }}-top.png -w 1920 -h 1080 ./outputs/svg/${{ env.PROJECT_NAME }}-top.svg
+          inkscape -z -e ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png -w 1920 -h 1080 ./outputs/svg/${{ env.PROJECT_NAME }}-bottom.svg
+          inkscape -z -e ./outputs/png/${{ env.PROJECT_NAME }}-schematic.png -w 1920 -h 1080 ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf
+
+      - name: Upload Images to imgur
+        id: upload-images
+        uses: devicons/public-upload-to-imgur@v2.2.2
+        with:
+          path: |
+            ./outputs/png/${{ env.PROJECT_NAME }}-top.png
+            ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png
+            ./outputs/png/${{ env.PROJECT_NAME }}-schematic.png
+          client_id: ${{secrets.IMGUR_CLIENT_ID}}
 
       - name: Upload Files (Gerber, Position, STEP, VRML, Netlist, Schematic)
         uses: actions/upload-artifact@master
@@ -185,6 +262,14 @@ jobs:
             ## CI Build ${{ steps.short-sha.outputs.SHORT_SHA }}
 
             This is an automated build from the CI pipeline.
+
+            ### Images
+
+            ![Top Layer](${{fromJSON(steps.upload-images.outputs.imgur_urls)[0]}})
+
+            ![Bottom Layer](${{fromJSON(steps.upload-images.outputs.imgur_urls)[1]}})
+
+            ![Schematic](${{fromJSON(steps.upload-images.outputs.imgur_urls)[2]}})
             
           draft: false
           prerelease: true
