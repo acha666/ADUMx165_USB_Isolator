@@ -106,7 +106,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler inkscape
+          sudo apt-get install -y protobuf-compiler inkscape imagemagick
 
       - name: Checkout Repository
         uses: actions/checkout@master
@@ -172,23 +172,47 @@ jobs:
                                     -D IS_CI=1 \
                                     ./${{ env.PROJECT_NAME }}.kicad_pcb
           
-          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-top.svg" \
-                                   --page-size-mode 2 \
-                                   --layers "F.Silkscreen,F.Paste,F.Mask,Edge.Cuts,F.Fab,F.Cu" \
-                                   -D BRANCH=${GITHUB_REF#refs/heads/} \
-                                    -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
-                                    -D LONG_SHA=$GITHUB_SHA \
-                                    -D IS_CI=1 \
-                                   ./${{ env.PROJECT_NAME }}.kicad_pcb
-          
-          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-bottom.svg" \
-                                   --page-size-mode 2 \
-                                   --layers "B.Silkscreen,B.Paste,B.Mask,Edge.Cuts,B.Fab,B.Cu" \
-                                   -D BRANCH=${GITHUB_REF#refs/heads/} \
-                                   -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
-                                   -D LONG_SHA=$GITHUB_SHA \
-                                   -D IS_CI=1 \
-                                   ./${{ env.PROJECT_NAME }}.kicad_pcb
+          for layer in "F.Silkscreen" "F.Paste" "F.Mask" "F.Fab" "F.Cu"; do
+              kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-${layer}.svg" \
+                                      --page-size-mode 2 \
+                                      --layers "$layer" \
+                                      -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                      -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                      -D LONG_SHA=$GITHUB_SHA \
+                                      -D IS_CI=1 \
+                                      ./${{ env.PROJECT_NAME }}.kicad_pcb
+          done
+
+          for layer in "B.Silkscreen" "B.Paste" "B.Mask" "B.Fab" "B.Cu"; do
+              kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-${layer}.svg" \
+                                      --page-size-mode 2 \
+                                      --mirror \
+                                      --layers "$layer" \
+                                      -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                      -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                      -D LONG_SHA=$GITHUB_SHA \
+                                      -D IS_CI=1 \
+                                      ./${{ env.PROJECT_NAME }}.kicad_pcb
+          done
+
+          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-Edge.Cuts.svg" \
+                                  --page-size-mode 2 \
+                                  --layers "Edge.Cuts" \
+                                  -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                  -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                  -D LONG_SHA=$GITHUB_SHA \
+                                  -D IS_CI=1 \
+                                  ./${{ env.PROJECT_NAME }}.kicad_pcb
+
+          kicad-cli pcb export svg -o "outputs/svg/${{ env.PROJECT_NAME }}-Edge.Cuts-mirrored.svg" \
+                                  --page-size-mode 2 \
+                                  --mirror \
+                                  --layers "Edge.Cuts" \
+                                  -D BRANCH=${GITHUB_REF#refs/heads/} \
+                                  -D SHORT_SHA=${{ steps.short-sha.outputs.SHORT_SHA }} \
+                                  -D LONG_SHA=$GITHUB_SHA \
+                                  -D IS_CI=1 \
+                                  ./${{ env.PROJECT_NAME }}.kicad_pcb   
           
           kicad-cli sch export netlist -o "outputs/netlist/${{ env.PROJECT_NAME }}.kicadsexpr.net" --format kicadsexpr ./${{ env.PROJECT_NAME }}.kicad_sch
 
@@ -203,10 +227,31 @@ jobs:
                                    --group-by "Reference,Value,Footprint,${DNP}" \
                                    ./${{ env.PROJECT_NAME }}.kicad_sch
 
-      - name: Convert SVG to PNG
+      - name: Process Images
+        shell: bash
         run: |
-          inkscape --export-filename ./outputs/png/${{ env.PROJECT_NAME }}-top.png --export-dpi 384 ./outputs/svg/${{ env.PROJECT_NAME }}-top.svg
-          inkscape --export-filename ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png --export-dpi 384 ./outputs/svg/${{ env.PROJECT_NAME }}-bottom.svg
+          for svg in $(ls ./outputs/svg/*.svg); do
+            inkscape --export-filename ./outputs/png/$(basename $svg .svg).png --export-dpi 1536 $svg
+          done
+
+          # stack top images
+          convert ./outputs/png/${{ env.PROJECT_NAME }}-F.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Mask.png -alpha set -channel A -evaluate multiply 0.5 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Paste.png -alpha set -channel A -evaluate multiply 0.8 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Fab.png -alpha set -channel A -evaluate multiply 0.5 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-F.Cu.png -alpha set -channel A -evaluate multiply 0.8 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts.png -alpha set -channel A -evaluate multiply 1.0 +channel \
+                  -background none -layers merge ./outputs/png/${{ env.PROJECT_NAME }}-top.png
+          
+          # stack bottom images
+          convert ./outputs/png/${{ env.PROJECT_NAME }}-B.Silkscreen.png -alpha set -channel A -evaluate multiply 0.8 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Mask.png -alpha set -channel A -evaluate multiply 0.5 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Paste.png -alpha set -channel A -evaluate multiply 0.8 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Fab.png -alpha set -channel A -evaluate multiply 0.5 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-B.Cu.png -alpha set -channel A -evaluate multiply 0.8 +channel \
+                  ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts-mirrored.png -alpha set -channel A -evaluate multiply 1.0 +channel \
+                  -background none -layers merge ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png
+
           inkscape --export-filename ./outputs/png/${{ env.PROJECT_NAME }}-schematic.png --export-dpi 384 ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf
 
       - name: Upload Images to imgur
@@ -231,6 +276,7 @@ jobs:
             ./outputs/netlist
             ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf
             ./outputs/svg
+            ./outputs/png
             ./outputs/bom/${{ env.PROJECT_NAME }}-bom.csv
 
       - name: Zip and rename files
