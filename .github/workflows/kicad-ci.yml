@@ -44,6 +44,7 @@ jobs:
         shell: bash
         run: |
           for severity in "all" "error" "warning" "exclusions"; do
+            echo "::group::Running DRC with severity $severity"
             OUTPUT=$(kicad-cli pcb drc -o "outputs/drc/${{ env.PROJECT_NAME }}-drc-report-${severity}.json" \
                                        --format json --schematic-parity --severity-${severity} \
                                        -D BRANCH=${GITHUB_REF#refs/heads/} \
@@ -52,6 +53,7 @@ jobs:
                                        -D IS_CI=1 \
                                        ./${{ env.PROJECT_NAME }}.kicad_pcb)
             echo "$OUTPUT"
+            echo "::endgroup::"
             SINGLE_LINE_OUTPUT=$(echo "$OUTPUT" | tr '\n' ',')
             echo "DRC_OUTPUT_${severity^^}=$SINGLE_LINE_OUTPUT" >> $GITHUB_OUTPUT
           done
@@ -63,23 +65,24 @@ jobs:
           violations=$(echo $output | grep -oP 'Found \K[0-9]+(?= violations)')
           unconnected_items=$(echo $output | grep -oP 'Found \K[0-9]+(?= unconnected items)')
           schematic_issues=$(echo "$output" | grep -oP 'Found \K[0-9]+(?= schematic parity issues)')
-          echo "Violations: $violations"
-          echo "Unconnected Items: $unconnected_items"
-          echo "Schematic Parity Issues: $schematic_issues"
+          echo "::info ::Violations: $violations"
+          echo "::info ::Unconnected Items: $unconnected_items"
+          echo "::info ::Schematic Parity Issues: $schematic_issues"
           if [ "$violations" -ne 0 ] || [ "$unconnected_items" -ne 0 ] || [ "$schematic_issues" -ne 0 ]; then
             echo "PROCEED=false" >> $GITHUB_OUTPUT
-            echo "Errors found, will stop the workflow."
+            echo "::error ::Errors found in the DRC report, please check the report for more details."
           else
             echo "PROCEED=true" >> $GITHUB_OUTPUT
-            echo "No errors found, proceeding with the workflow."
+            echo "::info ::No errors found in the DRC report."
           fi
 
       - name: Parse DRC Report and Create Warnings
         run: |
           jq -c '.violations[]' "outputs/drc/${{ env.PROJECT_NAME }}-drc-report-all.json" | while read -r violation; do
             description=$(echo $violation | jq -r '.description')
-            items=$(echo $violation | jq -r '.items[] | .description')
-            echo "::warning ::$description - $items"
+            # items=$(echo $violation | jq -r '.items[] | .description')
+            # echo "::notice ::$description - $items"
+            echo "::notice ::$description"
           done
 
       - name: Upload DRC Reports
@@ -202,9 +205,9 @@ jobs:
 
       - name: Convert SVG to PNG
         run: |
-          inkscape -z -e ./outputs/png/${{ env.PROJECT_NAME }}-top.png -w 1920 -h 1080 ./outputs/svg/${{ env.PROJECT_NAME }}-top.svg
-          inkscape -z -e ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png -w 1920 -h 1080 ./outputs/svg/${{ env.PROJECT_NAME }}-bottom.svg
-          inkscape -z -e ./outputs/png/${{ env.PROJECT_NAME }}-schematic.png -w 1920 -h 1080 ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf
+          inkscape --export-filename ./outputs/png/${{ env.PROJECT_NAME }}-top.png --export-dpi 384 ./outputs/svg/${{ env.PROJECT_NAME }}-top.svg
+          inkscape --export-filename ./outputs/png/${{ env.PROJECT_NAME }}-bottom.png --export-dpi 384 ./outputs/svg/${{ env.PROJECT_NAME }}-bottom.svg
+          inkscape --export-filename ./outputs/png/${{ env.PROJECT_NAME }}-schematic.png --export-dpi 384 ./outputs/schematic/${{ env.PROJECT_NAME }}-schematic.pdf
 
       - name: Upload Images to imgur
         id: upload-images
@@ -319,5 +322,5 @@ jobs:
       - name: Upload JLC Gerber Files
         uses: actions/upload-artifact@master
         with:
-          name: jlc-gerber
+          name: jlc-gerber-${{ steps.short-sha.outputs.SHORT_SHA }}
           path: ./jlc-gerber
