@@ -4,6 +4,12 @@
 	(generator_version "8.0")
 	(uuid "e0b7c9a4-25e7-4256-ba7b-e85752422815")
 	(paper "A4")
+	(title_block
+		(title "ADUMx165 USB Isolator")
+		(date "2024-11-15")
+		(rev "A")
+		(comment 1 "https://github.com/acha666/ADUMx165_USB_Isolator")
+	)
 	(lib_symbols
 		(symbol "ADUMx165_USB_Isolator:ADUM3165"
 			(pin_names

@@ -237,7 +237,7 @@ jobs:
           # stack top images
           convert \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Cu.png -alpha set -channel A -evaluate multiply 1.0 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Mask.png -alpha set -channel A -evaluate multiply 0.4 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Paste.png -alpha set -channel A -evaluate multiply 0.9 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Paste.png -alpha set -channel A -evaluate multiply 0.4 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Silkscreen.png -alpha set -channel A -evaluate multiply 0.95 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-F.Fab.png -alpha set -channel A -evaluate multiply 0.95 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts.png -alpha set -channel A -evaluate multiply 1.0 \) \
@@ -246,7 +246,7 @@ jobs:
           # stack bottom images
           convert \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Cu.png -alpha set -channel A -evaluate multiply 1.0 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Mask.png -alpha set -channel A -evaluate multiply 0.4 \) \
-                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Paste.png -alpha set -channel A -evaluate multiply 0.9 \) \
+                  \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Paste.png -alpha set -channel A -evaluate multiply 0.4 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Silkscreen.png -alpha set -channel A -evaluate multiply 0.9 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-B.Fab.png -alpha set -channel A -evaluate multiply 0.95 \) \
                   \( ./outputs/png/${{ env.PROJECT_NAME }}-Edge.Cuts-mirrored.png -alpha set -channel A -evaluate multiply 1.0 \) \
@@ -342,7 +342,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: CI Build #${{ steps.calculate-tag.outputs.NEXT_TAG_NUMBER }}
+          name: "CI Build #${{ steps.calculate-tag.outputs.NEXT_TAG_NUMBER }}"
           tag_name: ${{ steps.calculate-tag.outputs.NEXT_TAG }}
           body: |
             This is an automated build from the CI pipeline. Use the files below at your own risk.
