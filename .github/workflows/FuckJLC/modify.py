@@ -100,15 +100,17 @@ for key, value in Rule_Inner.items():
 
 # 复制钻孔文件
 for fileName in WorkDirFiles:
-    if fileName.endswith("-NPTH-drl.gbr"):
+    if fileName.endswith("-NPTH.drl"):
         with open(os.path.join(WorkDir, fileName), "r") as file:
             fileData = file.read()
-        with open(os.path.join(DestDir, "Gerber-NPTH-drl.gbr"), "w") as file:
+        with open(os.path.join(DestDir, "Drill_NPTH_Through.DRL"), "w") as file:
+            file.write(Config["DrillHeader"])
             file.write(fileData)
-    elif fileName.endswith("-PTH-drl.gbr"):
+    elif fileName.endswith("-PTH.drl"):
         with open(os.path.join(WorkDir, fileName), "r") as file:
             fileData = file.read()
-        with open(os.path.join(DestDir, "Gerber-PTH-drl.gbr"), "w") as file:
+        with open(os.path.join(DestDir, "Drill_PTH_Through.DRL"), "w") as file:
+            file.write(Config["DrillHeader"])
             file.write(fileData)
 
 fconfig.close()

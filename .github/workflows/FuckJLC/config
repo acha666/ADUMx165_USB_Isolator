@@ -2,15 +2,19 @@
 
 
 Header: |-
-  G04 EasyEDA Pro v2.1.49.1, 2024-11-4 00:19:19*
+  G04 EasyEDA Pro v2.2.32.3, 2024-11-17 14:00:00*
   G04 Gerber Generator version 0.3*
+
+DrillHeader: |-
+  ;EasyEDA Pro v2.2.32.3, 2024-11-17 14:02:39
+  ;Gerber Generator version 0.3
 
 TextFileName: PCB下单必读.txt
 TextFileContent: |-
   如何进行PCB下单
 
   请查看：
-  https://docs.lceda.cn/cn/PCB/Order-PCB
+  https://prodocs.lceda.cn/cn/pcb/order-order-pcb/index.html
 
 FileName:
   Outline: Gerber_BoardOutlineLayer.GKO
@@ -28,3 +32,4 @@ FileName:
   Bottom_SolderPaste: Gerber_BottomPasteMaskLayer.GBP
   Drill_Pth: Drill_PTH_Through.DRL
   Drill_Npth: Drill_NPTH_Through.DRL
+  DrillDrawingLayer: Gerber_DrillDrawingLayer.GDD
