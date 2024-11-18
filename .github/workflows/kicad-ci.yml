@@ -139,7 +139,7 @@ jobs:
                                        -D LONG_SHA=$GITHUB_SHA \
                                        -D IS_CI=1 ./${{ env.PROJECT_NAME }}.kicad_pcb
 
-          kicad-cli pcb export drill -o "outputs/gerber/" --format gerber --generate-map ./${{ env.PROJECT_NAME }}.kicad_pcb
+          kicad-cli pcb export drill -o "outputs/gerber/" --format excellon --excellon-separate-th --generate-map ./${{ env.PROJECT_NAME }}.kicad_pcb
 
           kicad-cli pcb export pos -o "outputs/pnp/${{ env.PROJECT_NAME }}-top-pos.csv" \
                                    --side front \
