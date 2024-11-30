@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - 'docs/**'
+
 
 env:
   PROJECT_NAME: ADUMx165_USB_Isolator
