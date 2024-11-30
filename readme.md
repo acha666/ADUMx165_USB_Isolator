@@ -4,7 +4,7 @@
 
 This is a USB 2.0 High-Speed (480Mbps) isolation module with an onboard 1-to-4 USB HUB, a 1A isolated DC-DC power supply, and support for external auxiliary power input with automatic switching between the two.
 
-![Circuit Board Image](.\docs\images\board-b9c2aeb.jpg)
+![Circuit Board Image](docs/images/board-b9c2aeb.jpg)
 
 ## Project Status
 
