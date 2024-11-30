@@ -6,6 +6,8 @@
 
 所有形如 https://www.analog.com/en/products/adum3165.html 的链接，替换为 https://www.analog.com/en/products/adum3165.html
 
+为中文文档添加到 ./readme.zh.md 的链接。
+
 以下为其他需要替换的链接：
 
 [CH334P](https://www.wch.cn/products/CH334.html) -> https://www.wch-ic.com/products/CH334.html

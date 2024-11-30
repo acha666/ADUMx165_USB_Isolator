@@ -1,6 +1,6 @@
 # ADUMx165 USB Isolator
 
-[Chinese Document / 中文文档](./readme.md) | English Document
+[Chinese Document / 中文文档](./readme.zh.md) | English Document
 
 This is a USB 2.0 High-Speed (480Mbps) isolation module with an onboard 1-to-4 USB HUB, a 1A isolated DC-DC power supply, and support for external auxiliary power input with automatic switching between the two.
 
