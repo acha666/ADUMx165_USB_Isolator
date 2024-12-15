@@ -19,7 +19,7 @@ This is a USB 2.0 High-Speed (480Mbps) isolation module with an onboard 1-to-4 U
 - **[SN6505A](https://www.ti.com/product/SN6505A)/[B](https://www.ti.com/product/SN6505B) Transformer Driver**: An isolated DC-DC power controller powered directly from the upstream USB port. The two variants differ in switching frequency.
 - **[DA2303-AL](https://www.coilcraft.com/en-us/products/transformers/power-transformers/isolation/da230x/da2303-al) Transformer**: 1:1.5 SMT transformer.
 - **[TPS2116](https://www.ti.com/product/TPS2116) Power Multiplexer**: Prioritizes 5V auxiliary power from the downstream port. When unavailable, it automatically switches to the onboard isolated DC-DC power supply.
-- **[TLV76750](https://www.ti.com/product/TLV767) LDO**: Regulates the output of the SN6505.
+- **[TLV76701](https://www.ti.com/product/TLV767) LDO**: Regulates the output of the SN6505.
 - **[CH334P](https://www.wch-ic.com/products/CH334.html) USB Hub**: A simple USB 2.0 1-to-4 HUB chip.
 
 ## Basic PCB Parameters
@@ -75,6 +75,10 @@ The module includes a 1A onboard isolated DC-DC power supply and supports extern
 
 **Note**: The external auxiliary power supply must not be connected to the same device as the upstream USB port; otherwise, isolation will fail.
 
+#### Updated Note (2024-12-15)
+
+Previously, the TLV76750 was configured for a fixed 5V output. Under heavy load, line losses might reduce the output voltage. It has been replaced with the adjustable TLV76701, with the output voltage set to approximately 5.2V.
+
 ### Device Selection Recommendations
 
 #### ADUM3165/4165
@@ -115,7 +119,5 @@ These prevent power instability on the isolated side during external power conne
 Tantalum capacitors are highly sensitive to overvoltage and polarity reversal, often failing catastrophically. It is recommended to select capacitors with a voltage rating at least twice the operating voltage (5V * 2 = 10V) and ensure correct polarity during soldering (the stripe mark typically indicates the positive terminal). This design uses 16V-rated tantalum capacitors.
 
 ### Notes
-
-Currently, the TLV76750 is configured for a fixed 5V output. Under heavy load, line losses may reduce the output voltage. It can be replaced with the adjustable TLV76701 in future iterations, with the output voltage set to approximately 5.2V.
 
 This document was translated by ChatGPT.

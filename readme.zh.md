@@ -41,7 +41,7 @@
 - **[SN6505A](https://www.ti.com.cn/product/cn/SN6505A)/[B](https://www.ti.com.cn/product/cn/SN6505B) 变压器驱动器**：直接从上游 USB 端口取电的隔离 DC-DC 电源控制器，二者开关频率不同。
 - **[DA2303-AL](https://www.coilcraft.com/en-us/products/transformers/power-transformers/isolation/da230x/da2303-al) 变压器**：1:1.5 SMT 变压器。
 - **[TPS2116](https://www.ti.com.cn/product/cn/TPS2116) 电源多路复用器**：优先从下行端口获取 5V 辅助电源，当该电源不可用时，自动切换至板载隔离 DC-DC 电源。
-- **[TLV76750](https://www.ti.com.cn/product/cn/TLV767) LDO**：用于 SN6505 输出的稳压。
+- **[TLV76701](https://www.ti.com.cn/product/cn/TLV767) LDO**：用于 SN6505 输出的稳压。
 - **[CH334P](https://www.wch.cn/products/CH334.html) USB Hub**：简单的 USB 2.0 一拖四 HUB 芯片。
 
 ## 基本电路板参数
@@ -97,6 +97,8 @@
 
 请注意，外部辅助电源不得与上行 USB 端口连接至同一设备，否则会导致隔离失效。
 
+2024.12.15更新：此前 TLV76750 为 5V 固定输出，在负载过大时由于线路损耗可能导致输出电压下降。已更换为可调输出电压的 TLV76701 并将输出电压设置在 5.2V 。
+
 ### 器件选型建议
 
 #### ADUM3165/4165
@@ -137,5 +139,3 @@ SN6505A 的开关频率为 160kHz，SN6505B 的开关频率为 420kHz。测试�
 钽电容对过压和反接极其敏感，并且失效时通常伴随明火甚至爆炸。建议选用耐压值至少为额定电压两倍（ 5V * 2 = 10V ）的器件，并且在焊接时注意极性（通常钽电容竖线标记侧为正极）。本设计使用耐压值为 16V 的钽电容。
 
 ### 备注
-
-当前 TLV76750 为 5V 固定输出，在负载过大时由于线路损耗可能导致输出电压下降。后续可以更换为可调输出电压的 TLV76701 并将输出电压设置在 5.2V 左右。
