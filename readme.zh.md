@@ -26,7 +26,7 @@
 
 这是一款 USB 2.0 高速（480Mbps）隔离模块，板载 1 分 4 USB HUB、1A 隔离 DC-DC 电源，并支持外部辅助电源输入，二者可自动切换。
 
-![电路板实拍图](docs/images/board-b9c2aeb.jpg)
+![电路板实拍图-1](docs/images/board-a221dc1-1.jpg) ![电路板实拍图-2](docs/images/board-a221dc1-2.jpg)
 
 ## 项目状态
 
